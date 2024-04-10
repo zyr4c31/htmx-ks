@@ -1,0 +1,31 @@
+package main
+
+import "fmt"
+
+templ layout(id string) {
+<html>
+
+<head>
+	<title>{ id }</title>
+</head>
+
+<body>
+	{ children... }
+</body>
+
+</html>
+}
+
+templ content(id int) {
+@layout(fmt.Sprint(id)) {
+this the content
+<div>
+	@actions(id)
+</div>
+}
+}
+
+templ actions(id int) {
+<a id="prev" href={ templ.URL(fmt.Sprintf("/%d", id-1)) } accesskey="h">{ fmt.Sprintf("%02d",id-1) }</a>
+<a id="next" href={ templ.URL(fmt.Sprintf("/%d", id+1)) } accesskey="l">{ fmt.Sprintf("%02d",id+1) }</a>
+}
