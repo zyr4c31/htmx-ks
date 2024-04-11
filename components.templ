@@ -3,29 +3,41 @@ package main
 import "fmt"
 
 templ layout(id string) {
-<html>
-
-<head>
-	<title>{ id }</title>
-</head>
-
-<body>
-	{ children... }
-</body>
-
-</html>
+	<html>
+		<head>
+			<title>{ id }</title>
+			<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+		</head>
+		<body>
+			{ children... }
+		</body>
+	</html>
 }
 
-templ content(id int) {
-@layout(fmt.Sprint(id)) {
-this the content
-<div>
-	@actions(id)
-</div>
-}
+templ content(id int, msgs []string) {
+	@layout(fmt.Sprint(id)) {
+		for _, msg := range msgs {
+			{ msg }
+		}
+		@chatter()
+		<div>
+			@actions(id)
+		</div>
+	}
 }
 
 templ actions(id int) {
-<a id="prev" href={ templ.URL(fmt.Sprintf("/%d", id-1)) } accesskey="h">{ fmt.Sprintf("%02d",id-1) }</a>
-<a id="next" href={ templ.URL(fmt.Sprintf("/%d", id+1)) } accesskey="l">{ fmt.Sprintf("%02d",id+1) }</a>
+	<a id="prev" href={ templ.URL(fmt.Sprintf("/%d", id-1)) } accesskey="h">{ fmt.Sprintf("%02d",id-1) }</a>
+	<a id="next" href={ templ.URL(fmt.Sprintf("/%d", id+1)) } accesskey="l">{ fmt.Sprintf("%02d",id+1) }</a>
+}
+
+templ chatter() {
+	<div hx-ws="connect:/chatroom">
+		<div id="chat_room">
+			...
+		</div>
+		<form id="form" hx-ws="send:submit" hx-swap="afterend">
+			<input name="chat_message"/>
+		</form>
+	</div>
 }

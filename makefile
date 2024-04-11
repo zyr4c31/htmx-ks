@@ -1,6 +1,6 @@
-air:
+make:
 	templ generate
 	air
 
 templ:
-	templ generate --watch --proxy=http://localhost:8080
+	templ generate --watch --proxy=http://zarch-mllrlt:8080
