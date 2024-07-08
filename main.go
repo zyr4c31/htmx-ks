@@ -13,7 +13,15 @@ func main() {
 	addr := "zarch-mllrlt:8080"
 	sm := http.NewServeMux()
 
-	files := generateRoutes(sm)
+	dir, files, err := readFiles()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = generateRoutes(dir, files, sm)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var model tocModel
@@ -31,9 +39,9 @@ func main() {
 	})
 
 	log.Printf("running on http://%v", addr)
-	err := http.ListenAndServe(addr, sm)
+	err = http.ListenAndServe(addr, sm)
 	if err != nil {
-		fmt.Printf("err: %v\n", err)
+		log.Panic(err)
 	}
 }
 
@@ -48,23 +56,25 @@ func readFiles() (fs.FS, []fs.DirEntry, error) {
 	return dir, files, err
 }
 
-func generateRoutes(sm *http.ServeMux) []fs.DirEntry {
-	dir, files, err := readFiles()
+func generateRoutes(dir fs.FS, files []fs.DirEntry, sm *http.ServeMux) error {
+	var err error
 	for _, file := range files {
-		path := fmt.Sprintf("/%v", file.Name())
+		fileName := strings.Split(file.Name(), "-")[1]
+		path := fmt.Sprintf("/%v", fileName)
 		sm.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 			bytes, _ := fs.ReadFile(dir, file.Name())
 			ext := strings.Split(file.Name(), ".")[1]
 			if ext == "html" {
 				w.Header().Set("Content-Type", "text/html")
 			}
-			w.Write(bytes)
+			_, err := w.Write(bytes)
+			if err != nil {
+				log.Panic(err)
+			}
+
 		})
 	}
-	if err != nil {
-		log.Fatalf("cannot generate toc: %v", err)
-	}
-	return files
+	return err
 }
 
 func htmlRenderer(w http.ResponseWriter, text string) {
