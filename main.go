@@ -2,52 +2,72 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
-	"strconv"
+	"os"
 	"strings"
-
-	"github.com/gorilla/websocket"
 )
-
-func htmlRenderer(w http.ResponseWriter, text string) {
-	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(fmt.Sprintf("<h1>%v</h1>", text)))
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
-var fullChatMsg []string
 
 func main() {
 	addr := "zarch-mllrlt:8080"
 	sm := http.NewServeMux()
-	go sm.HandleFunc("/chatroom", func(w http.ResponseWriter, r *http.Request) {
-		conn, _ := upgrader.Upgrade(w, r, nil)
-		for {
-			msgType, msg, err := conn.ReadMessage()
-			if err != nil {
-				log.Fatalln(err)
-			}
-			stringedMsg := string(msg)
-			chatMsg := strings.Split(stringedMsg, `"`)
-			fullChatMsg = append(fullChatMsg, chatMsg[3])
-			fmt.Printf("addr: %s msg: %s \n", conn.RemoteAddr(), chatMsg)
-			w.Header().Set("HX-Reswap", "afterbegin")
-			err = conn.WriteMessage(msgType, []byte(fmt.Sprintf(`<div id="chat_room" hx-swap-oob="beforeend">%v</div>`, fullChatMsg)))
-			if err != nil {
-				log.Fatalln(err)
-			}
-		}
-	})
+
+	files := generateRoutes(sm)
+
 	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		pathID := r.PathValue("id")
-		intID, _ := strconv.Atoi(pathID)
-		templ := content(intID, fullChatMsg)
-		templ.Render(r.Context(), w)
+		var model tocModel
+		for _, file := range files {
+			fileName := strings.Split(file.Name(), "-")[1]
+			tocItem := tocItem{
+				name: fileName,
+				link: fmt.Sprintf("/%v", fileName),
+			}
+			model.items = append(model.items, tocItem)
+		}
+		tmpl := toc(model)
+		w.Header().Set("Content-Type", "text/html")
+		tmpl.Render(r.Context(), w)
 	})
-	http.ListenAndServe(addr, sm)
+
+	log.Printf("running on http://%v", addr)
+	err := http.ListenAndServe(addr, sm)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+}
+
+func readFiles() (fs.FS, []fs.DirEntry, error) {
+	var files []fs.DirEntry
+	dir := os.DirFS("./pages")
+	files, err := fs.ReadDir(dir, ".")
+	if err != nil {
+		return dir, files, err
+	}
+
+	return dir, files, err
+}
+
+func generateRoutes(sm *http.ServeMux) []fs.DirEntry {
+	dir, files, err := readFiles()
+	for _, file := range files {
+		path := fmt.Sprintf("/%v", file.Name())
+		sm.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+			bytes, _ := fs.ReadFile(dir, file.Name())
+			ext := strings.Split(file.Name(), ".")[1]
+			if ext == "html" {
+				w.Header().Set("Content-Type", "text/html")
+			}
+			w.Write(bytes)
+		})
+	}
+	if err != nil {
+		log.Fatalf("cannot generate toc: %v", err)
+	}
+	return files
+}
+
+func htmlRenderer(w http.ResponseWriter, text string) {
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(fmt.Sprintf("<h1>%v</h1>", text)))
 }

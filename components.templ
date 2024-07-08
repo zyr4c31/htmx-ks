@@ -6,7 +6,6 @@ templ layout(id string) {
 	<html>
 		<head>
 			<title>{ id }</title>
-			<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
 		</head>
 		<body>
 			{ children... }
@@ -14,15 +13,25 @@ templ layout(id string) {
 	</html>
 }
 
-templ content(id int, msgs []string) {
+type tocModel struct {
+	items []tocItem
+}
+
+type tocItem struct {
+	name string
+	link string
+}
+
+templ toc(model tocModel) {
+	for _, item := range model.items {
+		<ol>
+			<a href={templ.SafeURL(item.link)}>{ item.name }</a>
+		</ol>
+	}
+}
+
+templ content(id int) {
 	@layout(fmt.Sprint(id)) {
-		for _, msg := range msgs {
-			{ msg }
-		}
-		@chatter()
-		<div>
-			@actions(id)
-		</div>
 	}
 }
 
