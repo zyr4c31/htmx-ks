@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/a-h/templ"
 )
 
 func main() {
@@ -27,13 +29,14 @@ func main() {
 		var model tocModel
 		for _, file := range files {
 			fileName := strings.Split(file.Name(), "-")[1]
+			link := templ.SafeURL(fileName)
 			tocItem := tocItem{
 				name: fileName,
-				link: fmt.Sprintf("/%v", fileName),
+				link: link,
 			}
 			model.items = append(model.items, tocItem)
 		}
-		tmpl := toc(model)
+		tmpl := content("toc", model)
 		w.Header().Set("Content-Type", "text/html")
 		tmpl.Render(r.Context(), w)
 	})
