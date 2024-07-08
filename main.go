@@ -12,7 +12,14 @@ import (
 )
 
 func main() {
-	addr := "zarch-mllrlt:8080"
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	fmt.Printf("hostname: %v\n", hostname)
+
+	addr := fmt.Sprintf("%v:8080", hostname)
 	sm := http.NewServeMux()
 
 	dir, files, err := readFiles()

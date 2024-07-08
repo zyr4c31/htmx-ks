@@ -6,14 +6,12 @@ templ layout(title string, model tocModel) {
 	<html>
 		<head>
 			<title>{ title }</title>
-			<link rel="stylesheet" href="assets/css/pico.min.css" />
+			<link rel="stylesheet" href="assets/css/pico.min.css"/>
 		</head>
 		<body class="grid grid-cols-2">
-		<aside>
-		@toc(model)
-		</aside>
+			<aside></aside>
 			<main>
-			{ children... }
+				{ children... }
 			</main>
 		</body>
 	</html>
@@ -29,19 +27,18 @@ type tocItem struct {
 }
 
 templ toc(model tocModel) {
-	@layout("toc", model){
+	@layout("toc", model) {
 		for _, item := range model.items {
 			<ol>
-				<a href={item.link}>{ item.name }</a>
-				</ol>
+				<a href={ item.link }>{ item.name }</a>
+			</ol>
 		}
 	}
 }
 
 templ content(title string, model tocModel) {
-	@layout(title, model){
+	@layout(title, model) {
 		mao ni unod
-
 	}
 }
 
