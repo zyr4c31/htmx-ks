@@ -17,10 +17,12 @@ func main() {
 		log.Panic(err)
 	}
 
-	fmt.Printf("hostname: %v\n", hostname)
-
 	addr := fmt.Sprintf("%v:8080", hostname)
 	sm := http.NewServeMux()
+
+	fs := http.FileServer(http.Dir("assets"))
+	sp := http.StripPrefix("/assets", fs)
+	sm.Handle("/assets", sp)
 
 	dir, files, err := readFiles()
 	if err != nil {
@@ -36,7 +38,8 @@ func main() {
 		var model tocModel
 		for _, file := range files {
 			fileName := strings.Split(file.Name(), "-")[1]
-			link := templ.SafeURL(fileName)
+			name := strings.Split(fileName, ".")[0]
+			link := templ.SafeURL(fmt.Sprintf("/%v", name))
 			tocItem := tocItem{
 				name: fileName,
 				link: link,
@@ -70,10 +73,12 @@ func generateRoutes(dir fs.FS, files []fs.DirEntry, sm *http.ServeMux) error {
 	var err error
 	for _, file := range files {
 		fileName := strings.Split(file.Name(), "-")[1]
-		path := fmt.Sprintf("/%v", fileName)
+		fileNameExtSplit := strings.Split(fileName, ".")
+		name := fileNameExtSplit[0]
+		ext := fileNameExtSplit[1]
+		path := fmt.Sprintf("/%v", name)
 		sm.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 			bytes, _ := fs.ReadFile(dir, file.Name())
-			ext := strings.Split(file.Name(), ".")[1]
 			if ext == "html" {
 				w.Header().Set("Content-Type", "text/html")
 			}
