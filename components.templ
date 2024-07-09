@@ -7,14 +7,14 @@ templ layout(title string, model tocModel) {
 		<head>
 			<title>{ title }</title>
 			<link rel="icon" type="image/png" href="/assets/images/htmx.png"/>
-			//<script src="/assets/js/htmx.min.js"></script>
-			<script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous"></script>
+			<link rel="stylesheet"href="/assets/css/styles.css"/>
+			<script src="/assets/js/htmx.min.js"></script>
 		</head>
-		<body class="grid grid-cols-2">
-			<aside>
+		<body class="grid grid-cols-12 dark:bg-slate-800 dark:text-white">
+			<aside class="col-span-2 text-xl">
 				@toc(model)
 			</aside>
-			<main>
+			<main class="col-span-9">
 				{ children... }
 			</main>
 		</body>
@@ -33,7 +33,7 @@ type tocItem struct {
 templ toc(model tocModel) {
 	<ol hx-boost="true" hx-target="main">
 		for _, item := range model.items {
-			<li><a href={ item.link }>{ item.name }</a></li>
+			<li><button type="button" ><a href={ item.link }>{ item.name }</a></button></li>
 		}
 	</ol>
 }

@@ -1,5 +1,5 @@
 # introduction [](./introduction.md)
-# ajax
+# ajax [](./ajax.html)
 ## triggers
 ### trigger modifiers
 ### trigger filters
